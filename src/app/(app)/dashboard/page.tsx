@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { prisma } from '@/lib/prisma'
 import { format } from 'date-fns'
 import { id as localeId } from 'date-fns/locale'

@@ -4,7 +4,21 @@
       "Bash(npm run:*)",
       "Bash(npx tsc:*)",
       "Bash(npm install:*)",
-      "Bash(npx prisma:*)"
+      "Bash(npx prisma:*)",
+      "Bash(find /Users/deantristan/Documents/Code/schejulo -type f -name package.json -o -name .env* -o -name vercel.json -o -name *.toml -o -name prisma.schema)",
+      "Bash(vercel --version)",
+      "Bash(DATABASE_URL=\"postgresql://postgres:?aW-Y.Hwrhs9bSZ@db.igjwelumrbsfldijhibl.supabase.co:5432/postgres\" npx prisma db push)",
+      "Bash(DATABASE_URL=\"postgresql://postgres:%3FaW-Y.Hwrhs9bSZ@db.igjwelumrbsfldijhibl.supabase.co:5432/postgres\" npx prisma db push)",
+      "Bash(DATABASE_URL=\"postgresql://postgres:%3FaW-Y.Hwrhs9bSZ@db.igjwelumrbsfldijhibl.supabase.co:5432/postgres?sslmode=require\" npx prisma db push)",
+      "Bash(DATABASE_URL=\"postgresql://postgres:mOPxgutfGRkgM8e6@db.igjwelumrbsfldijhibl.supabase.co:5432/postgres\" npx prisma db push)",
+      "Bash(supabase login:*)",
+      "Bash(openssl rand:*)",
+      "Bash(vercel --prod)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(vercel env:*)",
+      "Bash(grep -l \"prisma\\\\|fetch\\\\|api/\" /Users/deantristan/Documents/Code/schejulo/src/app/\\\\\\(app\\\\\\)/*/page.tsx /Users/deantristan/Documents/Code/schejulo/src/app/\\\\\\(app\\\\\\)/master/*/page.tsx)"
     ]
   }
 }
