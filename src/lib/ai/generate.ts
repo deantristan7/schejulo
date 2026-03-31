@@ -88,7 +88,7 @@ export async function buildGenerateContext(
         remainingHours: contractedHours - achievedHours,
         achievementPct: contractedHours > 0 ? Math.round((achievedHours / contractedHours) * 100) : 0,
         kpiStatus: kpi?.status ?? 'ON_TRACK',
-        preferredStartHour: b.preferredStartHour,
+        preferredStartHour: b.preferred_start_hour,
         reservedStudioIds: b.studios.map((s) => s.id),
       }
     })
