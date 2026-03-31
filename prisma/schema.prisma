@@ -1,0 +1,322 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────
+// ADMIN & DIVISI
+// ─────────────────────────────────────────
+
+model Admin {
+  id         String   @id @default(cuid())
+  name       String
+  telegramId String?  @unique @map("telegram_id")
+  status     Status   @default(ACTIVE)
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  divisions  AdminDivision[]
+  members    Member[]
+  schedules  Schedule[]       @relation("AssignedBy")
+  botLogs    BotLog[]
+
+  @@map("admins")
+}
+
+model Division {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  status      Status   @default(ACTIVE)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  admins        AdminDivision[]
+  brands        Brand[]
+  weekCalendars WeekCalendar[]
+
+  @@map("divisions")
+}
+
+model AdminDivision {
+  id         String   @id @default(cuid())
+  adminId    String   @map("admin_id")
+  divisionId String   @map("division_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  admin    Admin    @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  division Division @relation(fields: [divisionId], references: [id], onDelete: Cascade)
+
+  @@unique([adminId, divisionId])
+  @@map("admin_divisions")
+}
+
+// ─────────────────────────────────────────
+// BRAND
+// ─────────────────────────────────────────
+
+model Brand {
+  id                 String   @id @default(cuid())
+  divisionId         String   @map("division_id")
+  name               String
+  preferredStartHour Int      @default(9) @map("preferred_start_hour") // jam mulai live (0-23)
+  status             Status   @default(ACTIVE)
+  createdAt          DateTime @default(now()) @map("created_at")
+
+  division  Division        @relation(fields: [divisionId], references: [id])
+  contracts BrandContract[]
+  studios   Studio[]        @relation("ReservedBrand")
+  schedules Schedule[]
+  brandKpis BrandKpi[]
+
+  @@map("brands")
+}
+
+model BrandContract {
+  id              String   @id @default(cuid())
+  brandId         String   @map("brand_id")
+  periodLabel     String   @map("period_label") // format: "2026-03"
+  contractedHours Float    @map("contracted_hours")
+  validFrom       DateTime @map("valid_from")
+  validUntil      DateTime @map("valid_until")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  brand    Brand      @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  brandKpi BrandKpi[]
+
+  @@unique([brandId, periodLabel])
+  @@map("brand_contracts")
+}
+
+// ─────────────────────────────────────────
+// STUDIO
+// ─────────────────────────────────────────
+
+model Studio {
+  id             String      @id @default(cuid())
+  name           String      @unique // "Studio 1" .. "Studio 10"
+  studioNumber   Int         @unique @map("studio_number") // 1..10
+  reservedBrandId String?    @map("reserved_brand_id") // null = shared
+  studioType     StudioType  @default(SHARED) @map("studio_type")
+  status         StudioStatus @default(AVAILABLE)
+  createdAt      DateTime    @default(now()) @map("created_at")
+
+  reservedBrand Brand?     @relation("ReservedBrand", fields: [reservedBrandId], references: [id])
+  schedules     Schedule[]
+
+  @@map("studios")
+}
+
+// ─────────────────────────────────────────
+// MEMBER
+// ─────────────────────────────────────────
+
+model Member {
+  id             String   @id @default(cuid())
+  name           String
+  telegramId     String?  @unique @map("telegram_id")
+  primaryAdminId String   @map("primary_admin_id")
+  status         Status   @default(ACTIVE)
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  primaryAdmin     Admin           @relation(fields: [primaryAdminId], references: [id])
+  contracts        MemberContract[]
+  schedules        Schedule[]
+  weeklySummaries  WeeklySummary[]
+  monthlySummaries MonthlySummary[]
+
+  @@map("members")
+}
+
+model MemberContract {
+  id              String   @id @default(cuid())
+  memberId        String   @map("member_id")
+  periodLabel     String   @map("period_label") // format: "2026-03"
+  maxHoursPerMonth Float   @map("max_hours_per_month")
+  maxHoursPerDay  Float    @map("max_hours_per_day")   @default(8)
+  maxSessionHours Float    @map("max_session_hours")   @default(4)
+  minSessionHours Float    @map("min_session_hours")   @default(2)
+  // Aturan libur:
+  // - maxHoursPerMonth >= 160 → dayOffPerWeek = 1
+  // - maxHoursPerMonth < 160  → dayOffPerWeek = 2
+  dayOffPerWeek   Int      @map("day_off_per_week")    @default(2)
+  validFrom       DateTime @map("valid_from")
+  validUntil      DateTime @map("valid_until")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  member Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([memberId, periodLabel])
+  @@map("member_contracts")
+}
+
+// ─────────────────────────────────────────
+// WEEK CALENDAR
+// ─────────────────────────────────────────
+
+model WeekCalendar {
+  id          String   @id @default(cuid())
+  divisionId  String?  @map("division_id") // null = berlaku untuk semua divisi
+  periodLabel String   @map("period_label") // "2026-03"
+  weekStart   DateTime @map("week_start")
+  weekEnd     DateTime @map("week_end")
+  weekType    WeekType @map("week_type")
+  notes       String?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  division        Division?       @relation(fields: [divisionId], references: [id])
+  schedules       Schedule[]
+  weeklySummaries WeeklySummary[]
+
+  @@map("week_calendars")
+}
+
+// ─────────────────────────────────────────
+// SCHEDULE (inti sistem)
+// ─────────────────────────────────────────
+
+model Schedule {
+  id              String         @id @default(cuid())
+  memberId        String         @map("member_id")
+  brandId         String         @map("brand_id")
+  studioId        String         @map("studio_id")
+  assignedByAdminId String       @map("assigned_by_admin_id")
+  weekCalendarId  String?        @map("week_calendar_id")
+  workDate        DateTime       @map("work_date") @db.Date
+  sessionStart    String         @map("session_start") // "08:00"
+  sessionEnd      String         @map("session_end")   // "12:00"
+  sessionHours    Float          @map("session_hours")
+  sessionNumber   Int            @map("session_number") @default(1) // 1 atau 2 per hari
+  status          ScheduleStatus @default(DRAFT)
+  notes           String?
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
+
+  member          Member        @relation(fields: [memberId], references: [id])
+  brand           Brand         @relation(fields: [brandId], references: [id])
+  studio          Studio        @relation(fields: [studioId], references: [id])
+  assignedByAdmin Admin         @relation("AssignedBy", fields: [assignedByAdminId], references: [id])
+  weekCalendar    WeekCalendar? @relation(fields: [weekCalendarId], references: [id])
+
+  @@map("schedules")
+}
+
+// ─────────────────────────────────────────
+// SUMMARY & KPI
+// ─────────────────────────────────────────
+
+model WeeklySummary {
+  id                   String   @id @default(cuid())
+  memberId             String   @map("member_id")
+  weekCalendarId       String   @map("week_calendar_id")
+  totalHours           Float    @map("total_hours")           @default(0)
+  totalSessions        Int      @map("total_sessions")        @default(0)
+  daysWorked           Int      @map("days_worked")           @default(0)
+  dayOffUsed           Int      @map("day_off_used")          @default(0)
+  dayOffRemaining      Int      @map("day_off_remaining")     @default(0)
+  specialCaseTriggered Boolean  @map("special_case_triggered") @default(false)
+  notes                String?
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  member       Member       @relation(fields: [memberId], references: [id])
+  weekCalendar WeekCalendar @relation(fields: [weekCalendarId], references: [id])
+
+  @@unique([memberId, weekCalendarId])
+  @@map("weekly_summaries")
+}
+
+model MonthlySummary {
+  id               String  @id @default(cuid())
+  memberId         String  @map("member_id")
+  periodLabel      String  @map("period_label") // "2026-03"
+  totalHoursUsed   Float   @map("total_hours_used")   @default(0)
+  maxHoursContract Float   @map("max_hours_contract")
+  hoursRemaining   Float   @map("hours_remaining")    @default(0)
+  status           KpiStatus @default(ON_TRACK)
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  member Member @relation(fields: [memberId], references: [id])
+
+  @@unique([memberId, periodLabel])
+  @@map("monthly_summaries")
+}
+
+model BrandKpi {
+  id              String    @id @default(cuid())
+  brandId         String    @map("brand_id")
+  contractId      String    @map("contract_id")
+  periodLabel     String    @map("period_label")
+  contractedHours Float     @map("contracted_hours")
+  achievedHours   Float     @map("achieved_hours")   @default(0)
+  remainingHours  Float     @map("remaining_hours")
+  achievementPct  Float     @map("achievement_pct")  @default(0)
+  status          KpiStatus @default(ON_TRACK)
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  brand    Brand         @relation(fields: [brandId], references: [id])
+  contract BrandContract @relation(fields: [contractId], references: [id])
+
+  @@unique([brandId, periodLabel])
+  @@map("brand_kpis")
+}
+
+// ─────────────────────────────────────────
+// BOT LOG
+// ─────────────────────────────────────────
+
+model BotLog {
+  id           String   @id @default(cuid())
+  adminId      String?  @map("admin_id")
+  telegramId   String?  @map("telegram_id")
+  command      String
+  payload      Json?
+  resultStatus String?  @map("result_status")
+  timestamp    DateTime @default(now())
+
+  admin Admin? @relation(fields: [adminId], references: [id])
+
+  @@map("bot_logs")
+}
+
+// ─────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────
+
+enum Status {
+  ACTIVE
+  INACTIVE
+}
+
+enum StudioType {
+  RESERVED
+  SHARED
+}
+
+enum StudioStatus {
+  AVAILABLE
+  IN_USE
+  OFFLINE
+}
+
+enum WeekType {
+  BUSY
+  NORMAL
+  LOW
+}
+
+enum ScheduleStatus {
+  DRAFT
+  CONFIRMED
+  CANCELLED
+}
+
+enum KpiStatus {
+  ON_TRACK     // >= 80%
+  AT_RISK      // 70-79%
+  CRITICAL     // < 70%
+  COMPLETED    // >= 100%
+}
