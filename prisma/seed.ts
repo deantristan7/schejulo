@@ -123,8 +123,8 @@ async function main() {
     allBrandDefs.map((b) =>
       prisma.brand.upsert({
         where: { id: b.id },
-        update: { preferredStartHour: b.startHour },
-        create: { id: b.id, name: b.name, divisionId: b.divisionId, preferredStartHour: b.startHour, status: 'ACTIVE' },
+        update: { preferred_start_hour: b.startHour },
+        create: { id: b.id, name: b.name, divisionId: b.divisionId, preferred_start_hour: b.startHour, status: 'ACTIVE' },
       })
     )
   )
