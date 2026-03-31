@@ -18,7 +18,11 @@
       "Bash(git commit:*)",
       "Bash(git push:*)",
       "Bash(vercel env:*)",
-      "Bash(grep -l \"prisma\\\\|fetch\\\\|api/\" /Users/deantristan/Documents/Code/schejulo/src/app/\\\\\\(app\\\\\\)/*/page.tsx /Users/deantristan/Documents/Code/schejulo/src/app/\\\\\\(app\\\\\\)/master/*/page.tsx)"
+      "Bash(grep -l \"prisma\\\\|fetch\\\\|api/\" /Users/deantristan/Documents/Code/schejulo/src/app/\\\\\\(app\\\\\\)/*/page.tsx /Users/deantristan/Documents/Code/schejulo/src/app/\\\\\\(app\\\\\\)/master/*/page.tsx)",
+      "Bash(head -3 \"/Users/deantristan/Documents/Code/schejulo/src/app/\\(app\\)/dashboard/page.tsx\")",
+      "Bash(head -3 \"/Users/deantristan/Documents/Code/schejulo/src/app/\\(app\\)/master/divisions/page.tsx\")",
+      "Bash(head -3 \"/Users/deantristan/Documents/Code/schejulo/src/app/\\(app\\)/schedule/page.tsx\")",
+      "Bash(head -3 \"/Users/deantristan/Documents/Code/schejulo/src/app/\\(app\\)/generate/page.tsx\")"
     ]
   }
 }
